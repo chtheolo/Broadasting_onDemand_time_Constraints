@@ -8,13 +8,48 @@
 
 #define DataRange 15
 
-/*void RemovePhase(client *client, int numberOfclients , std::list<CA>::iterator it) {
-    int i;
 
-    for (i=0; i<numberOfclients; i++) {
-        client[i].UnservedDataRequests--;
+struct CA {
+    int data;
+    int slack_time;
+    int U;
+};
+
+void printClients_Request(int numberOfClients, client * client) {
+    int i;
+    unsigned u;
+
+    for(i=0; i<numberOfClients; i++) {
+        std::cout << "\nThe U(" << i <<") is: " << client[i].UnservedDataRequests << std::endl;
     }
-}*/
+
+    for(i=0; i<numberOfClients; i++) {
+        std::cout << "\nClient[" << i << "] request: ";
+        for (u=0; u<client[i].Request.size(); u++) {
+            std::cout << client[i].Request[u] << " " ;
+        }
+        std::cout << "--> " << "[ " << client[i].DeadLines << " ] ";
+        std::cout << "\n";
+
+    }
+}
+
+void RemovePhase(client *client, int numberOfclients , std::list<CA>::iterator it, std::vector<int> R_ca) {
+    int i;
+    std::vector<int>::iterator it_del_vec;
+    unsigned u;
+
+    u=0;
+    for (i=0; i<numberOfclients; i++) {
+        it_del_vec = client[i].Request.begin();
+        client[i].UnservedDataRequests--;
+        it_del_vec = std::find(client[i].Request.begin(), client[i].Request.end(), R_ca[u]);
+        if(it_del_vec != client[i].Request.end()) {
+            client[i].Request.erase(it_del_vec);
+        }
+        u++;
+    }
+}
 
 void initial(int *p_item_popularity) {
     for (int i=0; i<DataRange; i++) {
@@ -55,14 +90,9 @@ int main (int argc, char *argv[]) {
     int numberOfClients, i, Item_Popularity[DataRange], t_count=0;
     unsigned u,x;
     int *p_item_popularity;
+
     std::vector<int> ca, buffer, min_buf;
     std::vector<int>::iterator it_vector;
-
-    struct CA {
-        int data;
-        int slack_time;
-        int U;
-    };
 
     std::list<CA> CAlist, broadcastList;
     std::list<CA>::iterator it, it_buf, it2;
@@ -88,19 +118,10 @@ int main (int argc, char *argv[]) {
     for(i=0; i<numberOfClients; i++) {
         Client[i].generateRequest();
         Client[i].calculateUDR();
-        std::cout << "The U(" << i <<") is: " << Client[i].UnservedDataRequests << std::endl;
+        //std::cout << "The U(" << i <<") is: " << Client[i].UnservedDataRequests << std::endl;
     }
     
-    for(i=0; i<numberOfClients; i++) {
-        std::cout << "Client[" << i << "] request: ";
-        for (u=0; u<Client[i].Request.size(); u++) {
-            std::cout << Client[i].Request[u] << " " ;
-        }
-        std::cout << "--> " << "[ " << Client[i].DeadLines << " ] ";
-        std::cout << "\n";
-    }
-
-    
+    printClients_Request(numberOfClients, Client);
 
     ca = AggregationPhase(p_item_popularity, Client, numberOfClients);
 
@@ -134,7 +155,7 @@ int main (int argc, char *argv[]) {
     
     std::cout << "\nData Popularity : " << std::endl;
     for(i=0; i<DataRange; i++) {
-        std::cout << "\t\t  data_item[" << i << "]" << " = " << Item_Popularity[i] << std::endl;
+        std::cout << "\t\t  data_item_id[" << i << "]" << " = " << Item_Popularity[i] << std::endl;
     }
 
     std::cout <<"\nThe candidates from every request: { ";
@@ -147,13 +168,13 @@ int main (int argc, char *argv[]) {
 
     std::cout << "\nThe list (after merging the same data_items) CA: { " << std::endl;
     it = CAlist.begin();
-    std::cout << "\ndata_item: " << it->data << std::endl;
+    std::cout << "\ndata_item_id: " << it->data << std::endl;
     std::cout << "slack_time: " << it->slack_time << std::endl;
     std::cout << "Unserved_DataItems: " << it->U << std::endl;
     it++;
     while(it != CAlist.end()) {
         std::cout << "\n";
-        std::cout << "data_item: " << it->data << std::endl;
+        std::cout << "data_item_id: " << it->data << std::endl;
         std::cout << "slack_time: " << it->slack_time << std::endl;
         std::cout << "Unserved_DataItems: " << it->U << std::endl;
         it++;
@@ -179,19 +200,11 @@ int main (int argc, char *argv[]) {
 
         it = CAlist.begin();
 
-        //RemovePhase(Client, numberOfClients, it);
-        for(i=0; i<numberOfClients; i++) {
-            Client[i].UnservedDataRequests--;
-            
-            it = CAlist.begin();
-            while(it != CAlist.end()){
-                it_vector = std::find(Client[i].Request.begin(), Client[i].Request.end(), it->data);
-                if(it_vector !=Client[i].Request.end()) {
-                    Client[i].Request.erase(Client[i].Request.begin(), it_vector);
-                }
-            }
 
-        }
+        RemovePhase(Client, numberOfClients, it, ca);
+
+        printClients_Request(numberOfClients, Client);
+
     }
     else { /*****************   Conversion Phase  ********************/
 
