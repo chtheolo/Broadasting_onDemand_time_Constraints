@@ -17,7 +17,7 @@ struct CA {
 
 void printClients_Request(int numberOfClients, client * client) {
     int i;
-    unsigned u;
+    unsigned u,t;
 
     std::cout << "\n";
     for(i=0; i<numberOfClients; i++) {
@@ -30,7 +30,12 @@ void printClients_Request(int numberOfClients, client * client) {
         for (u=0; u<client[i].Request.size(); u++) {
             std::cout << client[i].Request[u] << " " ;
         }
-        std::cout << "--> " << "\t\t[ " << client[i].DeadLines << " ] ";
+        t = client[i].Request.size();
+        while(t<DataRange){
+            std::cout << "  ";
+            t++;
+        }
+        std::cout << "--> " << "[ " << client[i].DeadLines << " ] ";
         std::cout << "\n";
 
     }
@@ -56,15 +61,15 @@ void RemovePhase(client *client, int numberOfclients , std::list<CA>::iterator i
     }
     else {
 
-        i=0;
-        for(u=0; u<R_ca.size(); u++){
-            if( it->data == R_ca[u]) {
-                it_del_vec = std::find(client[i].Request.begin(), client[i].Request.end(), it->data);
-                client[i].Request.erase(it_del_vec);
-                client[i].UnservedDataRequests--;
+            i=0;
+            for(u=0; u<R_ca.size(); u++){
+                if( it->data == R_ca[u]) {
+                    it_del_vec = std::find(client[i].Request.begin(), client[i].Request.end(), it->data);
+                    client[i].Request.erase(it_del_vec);
+                    client[i].UnservedDataRequests--;
+                }
+                i++;
             }
-            i++;
-        }
     }
 }
 
@@ -136,12 +141,11 @@ int main (int argc, char *argv[]) {
     for(i=0; i<numberOfClients; i++) {
         Client[i].generateRequest();
         Client[i].calculateUDR();
-        //std::cout << "The U(" << i <<") is: " << Client[i].UnservedDataRequests << std::endl;
     }
     
     printClients_Request(numberOfClients, Client);
 
-    std::cout << "\n---AGGREGATION PHASE--->\n" << std::endl;
+    std::cout << "\n... AGGREGATION PHASE --->\n" << std::endl;
 
     ca = AggregationPhase(p_item_popularity, Client, numberOfClients);
 
@@ -221,6 +225,8 @@ int main (int argc, char *argv[]) {
         it = CAlist.begin();
 
 
+        std::cout << "\n... REMOVING PHASE --->\n" << std::endl;
+
         RemovePhase(Client, numberOfClients, it, ca, conversionORno, u);
 
         printClients_Request(numberOfClients, Client);
@@ -228,6 +234,8 @@ int main (int argc, char *argv[]) {
     }
     else { /*****************   Conversion Phase  ********************/
 
+        std::cout << "\n... CONVESRION PHASE --->\n" << std::endl;
+        
         CA min;
 
         for(i=0; i<myWebServer.channels; i++) {
@@ -273,7 +281,7 @@ int main (int argc, char *argv[]) {
         it = CAlist.begin();
         std::cout << "\nThe CAlist with the deleted data :" << std::endl;
         while(it != CAlist.end()) {
-            std::cout << "\ndata item: ";
+            std::cout << "\ndata item_id: ";
             std::cout << it->data ;
             std::cout << "\nslack time: ";
             std::cout << it->slack_time ;
@@ -286,9 +294,10 @@ int main (int argc, char *argv[]) {
 
         u = broadcastList.size();
         conversionORno = true;
+
         std::cout << "\nThe list with the broadcast data :" << std::endl;
         while(it != broadcastList.end()) {
-            std::cout << "\ndata item: ";
+            std::cout << "\ndata item_id: ";
             std::cout << it->data ;
             std::cout << "\nslack time: ";
             std::cout << it->slack_time ;
@@ -298,6 +307,7 @@ int main (int argc, char *argv[]) {
             it++;
         }
 
+        std::cout << "\n... REMOVING PHASE --->\n" << std::endl;
 
         printClients_Request(numberOfClients, Client);
     }
