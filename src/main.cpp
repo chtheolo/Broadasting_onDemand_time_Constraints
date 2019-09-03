@@ -8,13 +8,13 @@
 
 #define DataRange 15
 
-void RemovePhase(client *client, int numberOfclients) {
+/*void RemovePhase(client *client, int numberOfclients , std::list<CA>::iterator it) {
     int i;
 
     for (i=0; i<numberOfclients; i++) {
         client[i].UnservedDataRequests--;
     }
-}
+}*/
 
 void initial(int *p_item_popularity) {
     for (int i=0; i<DataRange; i++) {
@@ -56,6 +56,7 @@ int main (int argc, char *argv[]) {
     unsigned u,x;
     int *p_item_popularity;
     std::vector<int> ca, buffer, min_buf;
+    std::vector<int>::iterator it_vector;
 
     struct CA {
         int data;
@@ -176,7 +177,21 @@ int main (int argc, char *argv[]) {
             i++;
         }
 
-        RemovePhase(Client, numberOfClients );
+        it = CAlist.begin();
+
+        //RemovePhase(Client, numberOfClients, it);
+        for(i=0; i<numberOfClients; i++) {
+            Client[i].UnservedDataRequests--;
+            
+            it = CAlist.begin();
+            while(it != CAlist.end()){
+                it_vector = std::find(Client[i].Request.begin(), Client[i].Request.end(), it->data);
+                if(it_vector !=Client[i].Request.end()) {
+                    Client[i].Request.erase(Client[i].Request.begin(), it_vector);
+                }
+            }
+
+        }
     }
     else { /*****************   Conversion Phase  ********************/
 
