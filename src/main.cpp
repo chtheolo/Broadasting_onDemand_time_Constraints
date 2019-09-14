@@ -8,7 +8,6 @@
 #include "webserver.h"
 
 #define DataRange 15
-//#define STOP "n"
 
 
 struct CA {
@@ -53,7 +52,6 @@ void RemovePhase(client *client, int numberOfclients , std::list<CA>::iterator i
 
         u=0;
         for (i=0; i<numberOfclients; i++) {
-            //it_del_vec = client[i].Request.begin();
             it_del_vec = std::find(client[i].Request.begin(), client[i].Request.end(), R_ca[u]);
             if(it_del_vec != client[i].Request.end()) {
                 client[i].Request.erase(it_del_vec);
@@ -93,10 +91,8 @@ std::vector<int> AggregationPhase(int *p_item_popularity, client *Client, int nu
     //and the array value corresponds to popularity, i.e [i] = x , x popularity
     for(i=0; i<numberOfClients; i++) {
         for(u=0; u<Client[i].Request.size(); u++) {
-            //if(Client[i].UnservedDataRequests > 0){
                 data = Client[i].Request[u];
                 (*(p_item_popularity + data))++;
-            //}
         }
     }
 
@@ -123,7 +119,7 @@ std::vector<int> AggregationPhase(int *p_item_popularity, client *Client, int nu
 
 
 int main (int argc, char *argv[]) {
-    int numberOfClients, i, Item_Popularity[DataRange], t_count=0;
+    int numberOfClients, i, Item_Popularity[DataRange], t_count=0, maxIteration=0;
     unsigned u;
     int *p_item_popularity;
     bool conversionORno = false;
@@ -160,17 +156,12 @@ int main (int argc, char *argv[]) {
         Client[i].generateRequest();
         Client[i].calculateUDR();
     }
-    
-    int maxIteration = (int) Client[0].Request.size();
-    for (i=1; i<numberOfClients; i++){
-        if(maxIteration < (int) Client[i].Request.size()) {
-            maxIteration = (int) Client[i].Request.size();
-        }
-    }
+
 
     do{
-        for(i=0; i<numberOfClients; i++){
-            Client[i].PopularData.clear();
+        maxIteration = 0;
+        for (i=0; i<numberOfClients; i++){
+                maxIteration += (int) Client[i].Request.size();
         }
 
         std::cout << "\n>>> ΙΤΕΡΑΤΙΟΝ: " << t_count << std::endl;
@@ -333,26 +324,9 @@ int main (int argc, char *argv[]) {
                 }
 
                 
-                std::cout <<"/\new choice--\n\ndata item id: " << min.data << "\nslack_time:" << min.slack_time<< "\nuserved:" << min.U << std::endl;
-
-
-                std::list<CA>::iterator itnew;
                 
                 broadcastList.push_back(min);
                 
-                itnew = broadcastList.begin();
-
-                std::cout << "\n\nTesting the broadcast list:" << std::endl;
-                while(itnew != broadcastList.end()) {
-                    std::cout << "\ndata item_id: ";
-                    std::cout << itnew->data ;
-                    std::cout << "\nslack time: ";
-                    std::cout << itnew->slack_time ;
-                    std::cout << "\nUserved DataItems: ";
-                    std::cout << itnew->U << std::endl;
-                    itnew++;
-                }
-
 
                 // in order to overide the munmap_chunk ,i should check if it is the last item or not.
                 if(it_buf != CAlist.end()){
@@ -362,31 +336,8 @@ int main (int argc, char *argv[]) {
                 else{
                     CAlist.pop_back();
                 }
-                itnew = CAlist.begin();
-
-                std::cout << "\n\nTesting the CAlist:" << std::endl;
-                while(itnew != CAlist.end()) {
-                    std::cout << "\ndata item_id: ";
-                    std::cout << itnew->data ;
-                    std::cout << "\nslack time: ";
-                    std::cout << itnew->slack_time ;
-                    std::cout << "\nUserved DataItems: ";
-                    std::cout << itnew->U << std::endl;
-                    itnew++;
-                }
             }
 
-            /*it = CAlist.begin();
-            std::cout << "\nThe CAlist with the deleted data :" << std::endl;
-            while(it != CAlist.end()) {
-                std::cout << "\ndata item_id: ";
-                std::cout << it->data ;
-                std::cout << "\nslack time: ";
-                std::cout << it->slack_time ;
-                std::cout << "\nUserved DataItems: ";
-                std::cout << it->U << std::endl;
-                it++;
-            }*/
 
             it = broadcastList.begin();
 
@@ -420,7 +371,7 @@ int main (int argc, char *argv[]) {
 
         std::cout << "\nDo you want to continue running the algorithm(y/n): ";
         std::cin >> stop;
-    }while(t_count < maxIteration && stop.compare("n") != 0);
+    }while( maxIteration > 0 && stop.compare("n") != 0);  //run the algorithm while the sum of the clients requests is >0 or stop it if the user choose "n"
     
 
 
